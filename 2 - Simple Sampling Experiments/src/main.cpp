@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <execution>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,7 +11,6 @@
 #include <ranges>
 #include <span>
 #include <string>
-#include <vector>
 
 /**
  * The Mersenne Twister 19937 uniform random number generator with random seed.
@@ -68,7 +66,7 @@ void sequence_of_uniform_reals()
     std::cout << "\t S is " << S << std::endl;
 
     std::array<double, S> numbers {};
-    std::generate(std::execution::par_unseq, numbers.begin(), numbers.end(), uniform_real);
+    std::generate(numbers.begin(), numbers.end(), uniform_real);
 
     write_output(numbers, "sequence" + std::to_string(S));
 }
@@ -106,7 +104,7 @@ void sequence_of_biased_reals(const double lambda)
     });
 
     std::array<double, S> numbers {};
-    std::generate(std::execution::par_unseq, numbers.begin(), numbers.end(), [&] {
+    std::generate(numbers.begin(), numbers.end(), [&] {
         return biased_real(distributions);
     });
 
