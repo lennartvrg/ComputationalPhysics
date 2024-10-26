@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <execution>
 #include <filesystem>
-#include <format>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -14,6 +13,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <charconv>
 
 /**
  * The Mersenne Twister 19937 uniform random number generator with random seed.
@@ -39,7 +39,7 @@ static std::ranges::iota_view flips {0, 32};
  */
 void write_output(const std::span<double> numbers, const std::string & name) {
     std::ofstream output;
-    output.open(std::format("output/{}.csv", name));
+    output.open("output/" + name + ".csv");
 
     std::ranges::copy(numbers.begin(), numbers.end(), std::ostream_iterator<double>(output, "\n"));
     output.close();
@@ -71,7 +71,7 @@ void sequence_of_uniform_reals()
     std::array<double, S> numbers {};
     std::generate(std::execution::par_unseq, numbers.begin(), numbers.end(), uniform_real);
 
-    write_output(numbers, std::format("sequence{:d}", S));
+    write_output(numbers, "sequence" + std::to_string(S));
 }
 
 /**
@@ -111,7 +111,10 @@ void sequence_of_biased_reals(const double lambda)
         return biased_real(distributions);
     });
 
-    write_output(numbers, std::format("sequence_biased{:.1f}", lambda));
+    char buf[4] {};
+    std::to_chars(buf, buf + 4, lambda, std::chars_format::fixed, 1);
+
+    write_output(numbers, "sequence_biased" + std::string(buf));
 }
 
 /**
