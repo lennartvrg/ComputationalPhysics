@@ -108,7 +108,7 @@ void sequence_of_biased_reals(const double lambda)
         return biased_real(distributions);
     });
 
-    write_output(numbers, "sequence_biased" + std::to_string(std::round(lambda * 10)));
+    write_output(numbers, "sequence_biased" + std::to_string((int) std::round(lambda * 10)));
 }
 
 /**
