@@ -13,7 +13,6 @@
 #include <span>
 #include <string>
 #include <vector>
-#include <charconv>
 
 /**
  * The Mersenne Twister 19937 uniform random number generator with random seed.
@@ -111,10 +110,7 @@ void sequence_of_biased_reals(const double lambda)
         return biased_real(distributions);
     });
 
-    char buf[4] {};
-    std::to_chars(buf, buf + 4, lambda, std::chars_format::fixed, 1);
-
-    write_output(numbers, "sequence_biased" + std::string(buf));
+    write_output(numbers, "sequence_biased" + std::to_string(std::round(lambda * 10)));
 }
 
 /**
