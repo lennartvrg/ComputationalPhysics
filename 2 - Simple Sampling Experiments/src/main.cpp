@@ -90,8 +90,7 @@ double biased_real(std::array<std::discrete_distribution<>, 32> & distributions)
 
 /**
  * Generates a sequence of biased reals in parallel and writes the result to a CSV file. The biased distributions are
- * calculated once for evey possible value of j and then passed and then passed to the function calculating the biased
- * real number.
+ * calculated once for evey possible value of j and then passed to the function calculating the biased real number.
  *
  * @tparam S The size of the sequence of biased reals.
  * @param lambda The lambda parameter of the bias.
