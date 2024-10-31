@@ -50,7 +50,7 @@ void write_output(const std::span<double> numbers, const std::string & name) {
  */
 double uniform_real()
 {
-    return std::accumulate(flips.begin(), flips.end(), 0.0, [&](const double acc, const int j) {
+    return std::accumulate(flips.begin(), flips.end(), 0.0, [&] (const double acc, const int j) {
         return acc + uniform_distribution(generator) / pow(2, j + 1);
     });
 }
@@ -66,7 +66,7 @@ void sequence_of_uniform_reals()
     std::cout << "\t S is " << S << std::endl;
 
     std::array<double, S> numbers {};
-    std::generate(numbers.begin(), numbers.end(), uniform_real);
+    std::generate(std::execution::par_unseq, numbers.begin(), numbers.end(), uniform_real);
 
     write_output(numbers, "sequence" + std::to_string(S));
 }
@@ -104,7 +104,7 @@ void sequence_of_biased_reals(const double lambda)
     });
 
     std::array<double, S> numbers {};
-    std::generate(numbers.begin(), numbers.end(), [&] {
+    std::generate(std::execution::par_unseq, numbers.begin(), numbers.end(), [&] {
         return biased_real(distributions);
     });
 
