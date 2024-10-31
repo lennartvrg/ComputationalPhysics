@@ -11,6 +11,7 @@
 #include <ranges>
 #include <span>
 #include <string>
+#include <execution>
 
 /**
  * The Mersenne Twister 19937 uniform random number generator with random seed.
