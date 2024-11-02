@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstddef>
 #include <iostream>
+#include <algorithm>
 
 namespace histogram
 {
