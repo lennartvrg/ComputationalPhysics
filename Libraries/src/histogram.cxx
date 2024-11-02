@@ -7,7 +7,7 @@
  */
 histogram::Histogram::Histogram(const size_t bins) : data(bins)
 {
-    std::ranges::fill(data, 0);
+    std::fill(data.begin(), data.end(), 0);
 }
 
 /**

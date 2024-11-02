@@ -5,7 +5,6 @@
 #include <atomic>
 #include <cstddef>
 #include <iostream>
-#include <ranges>
 
 namespace histogram
 {
