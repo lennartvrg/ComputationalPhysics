@@ -1,18 +1,20 @@
 #include "lattice_1d.h"
 
+#include <ranges>
+
 short Lattice1D::fetch_flip(size_t i) {
     const short old_spin = spins.at(i);
     spins.at(i) *= -1;
     return old_spin;
 }
 
-size_t constexpr Lattice1D::num_sites() noexcept {
+constexpr size_t Lattice1D::num_sites() const noexcept {
     return spins.size();
 }
 
 double Lattice1D::energy() const {
     int energy = 0;
-    for (size_t i = 0; i < spins.size(); ++i)
+    for (const size_t i : std::views::iota(static_cast<size_t>(0), spins.size()))
     {
         energy += spins.at(i) * spins.at((i + 1) % spins.size());
     }

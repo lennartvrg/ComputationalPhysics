@@ -16,14 +16,29 @@
 #include <metropolis_result.h>
 #include <utils.h>
 
+/**
+ * The number of steps the range [-1,+1] of the external magnetic field is divided into.
+ */
 constexpr size_t NUM_H_STEPS = 100;
 
+/**
+ * The number of experiments done
+ */
 constexpr size_t NUM_EXPERIMENTS = 100;
 
-constexpr size_t NUM_SAMPLES = 10000;
+/**
+ * The number of sweeps for each experiment.
+ */
+constexpr size_t NUM_SWEEPS = 10000;
 
+/**
+ * The lattice size.
+ */
 constexpr size_t LATTICE_SIZE = 20;
 
+/**
+ * The coupling constant J
+ */
 constexpr double J = 0.75;
 
 /**
@@ -36,6 +51,11 @@ static thread_local std::mt19937 generator {std::random_device()()};
  */
 static std::uniform_real_distribution uniform_distribution {0.0, 1.0};
 
+/**
+ * Divides the range [-1,+1] of the external magnetic field into NUM_H_STEPS steps for iterating over them.
+ *
+ * @return The strenght of the external magnetic field.
+ */
 static auto stepped_magnetic_field() {
 	return std::views::iota(static_cast<size_t>(0), NUM_H_STEPS) | std::views::transform([=] (const size_t i) {
 		return static_cast<double>(2 * i) / static_cast<double>(NUM_H_STEPS - 1) - 1.0;
@@ -43,31 +63,35 @@ static auto stepped_magnetic_field() {
 }
 
 /**
- * 
+ * Calculates how long calculation the action and the delta action takes for a given lattice size.
+ *
  * @param lattice_size The size of the lattice to be measured.
  * @return The time it took to calculate the action and action_diff in nanoseconds.
  */
 LatticeMeasurement measure_lattice(const size_t lattice_size)
 {
 	static std::atomic_int counter { 0 };
-	const Lattice1D lattice { lattice_size, 1, 1 };
+	const Lattice1D lattice { lattice_size, J, 0 };
 
 	const Experiment<int64_t> action = measure_execution([&] -> void {
 		static_cast<void>(lattice.action());
-	}, 100);
+	}, 20);
 
 	const Experiment<int64_t> diffAction = measure_execution([&] -> void {
 		static_cast<void>(lattice.action_diff(0));
-	}, 100);
+	}, 20);
 
-	std::cout << "\rMeasure lattice scaling: " << std::to_string(++counter) << "/50" << std::flush;
+	std::cout << "\rMeasure lattice scaling: " << std::to_string(++counter) << "/100" << std::flush;
 	return LatticeMeasurement { lattice_size, action, diffAction };
 }
 
+/**
+ * Measures how long it takes to calculate the action for increasing lattice sizes.
+ */
 void measure_lattice_scaling()
 {
-	std::vector<size_t> sizes (10);
-	std::ranges::generate(sizes, [n = 0] mutable -> int { return n += 100000; });
+	std::vector<size_t> sizes (100);
+	std::ranges::generate(sizes, [n = 0] mutable -> int { return n += 50000; });
 
 	std::vector<LatticeMeasurement> measurements (sizes.size());
 	std::ranges::transform(sizes, measurements.begin(), measure_lattice);
@@ -76,6 +100,10 @@ void measure_lattice_scaling()
 	std::cout << std::endl;
 }
 
+/**
+ * Performs a single lattice sweep and calculates the acceptance ratio for every lattice site and flips
+ * the spin of the site if the acceptance ration is greater than a random number [0, 1].
+ */
 void metropolis_sweep(const std::shared_ptr<Lattice> & lattice)
 {
 	for (const size_t i : std::views::iota(static_cast<size_t>(0), lattice->num_sites())) {
@@ -85,17 +113,34 @@ void metropolis_sweep(const std::shared_ptr<Lattice> & lattice)
 	}
 }
 
-double metropolis_hastings_single_experiment(const size_t num_samples, const double h)
+/**
+ * Performs the metropolis hastings simulation with the given number of sweeps for a given
+ * external magnetic field h. Returns the mean magnetization per spin.
+ *
+ * @param num_sweeps The number of sweeps made in total.
+ * @param h The strength of the external magnetic field.
+ * @return The mean magnetization per spin.
+ */
+double metropolis_hastings_single_experiment(const size_t num_sweeps, const double h)
 {
-	std::ranges::iota_view<size_t, size_t> ranges { 0, num_samples };
+	std::ranges::iota_view<size_t, size_t> ranges { 0, num_sweeps };
 	const std::shared_ptr<Lattice> lattice = std::make_shared<Lattice1D>(LATTICE_SIZE, J, h);
 
 	return std::accumulate(ranges.begin(), ranges.end(), 0.0, [&] (const double sum, [[maybe_unused]] const size_t i) {
 		metropolis_sweep(lattice);
 		return sum + lattice->magnetization();
-	}) / static_cast<double>(lattice->num_sites() * num_samples);
+	}) / static_cast<double>(lattice->num_sites() * num_sweeps);
 }
 
+/**
+ * Performs the metropolis hastings simulation multiple times for a given external magnetic field.
+ * Returns the mean magnetization and uncertainty per spin across all experiments.
+ *
+ * @param num_experiments The number of experiments to perform.
+ * @param num_samples The number of sweeps per experiment.
+ * @param h The strength of the external magnetic field.
+ * @return The mean magnetization and uncertainty per spin.
+ */
 MetropolisResult metropolis_hastings_multiple_experiments(const size_t num_experiments, const size_t num_samples, const double h)
 {
 	std::vector<double> measurements (num_experiments);
@@ -105,19 +150,28 @@ MetropolisResult metropolis_hastings_multiple_experiments(const size_t num_exper
 	return MetropolisResult { h, Experiment<double>(measurements) };
 }
 
+/**
+ * Sweeps through the external magnetic field [-1,+1] and calculates the mean magnetization and uncertainty per spin
+ * per value of h and writes the results to a CSV file.
+ */
 void sweep_external_magnetic_field() {
 	static std::atomic_int counter { 0 };
 	std::vector<MetropolisResult> measurements;
 
 	for (const double h : stepped_magnetic_field()) {
-		std::cout << "\rMetropolis-Hastings: h=" << std::to_string(++counter) << "/" << std::to_string(NUM_H_STEPS) << std::flush;
-		measurements.emplace_back(metropolis_hastings_multiple_experiments(NUM_EXPERIMENTS, NUM_SAMPLES, h));
+		std::cout << "\rMetropolis-Hastings: " << std::to_string(++counter) << "/" << std::to_string(NUM_H_STEPS) << std::flush;
+		measurements.emplace_back(metropolis_hastings_multiple_experiments(NUM_EXPERIMENTS, NUM_SWEEPS, h));
 	}
 
 	write_output_csv(static_cast<std::span<MetropolisResult>>(measurements), "metropolis", "h,magnetization,delta_magnetization");
 	std::cout << std::endl;
 }
 
+/**
+ * Runs code for problem set 4.
+ *
+ * @return System status code.
+ */
 int main()
 {
     std::filesystem::create_directory("output");

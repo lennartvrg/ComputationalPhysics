@@ -9,7 +9,7 @@ public:
     virtual ~Lattice() = default;
 
     virtual short fetch_flip(size_t i) = 0;
-    virtual constexpr size_t num_sites() noexcept = 0;
+    [[nodiscard]] virtual constexpr size_t num_sites() const noexcept = 0;
 
     [[nodiscard]] virtual double energy() const = 0;
     [[nodiscard]] virtual double energy_diff(size_t i) const = 0;

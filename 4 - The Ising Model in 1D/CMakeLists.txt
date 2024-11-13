@@ -13,7 +13,7 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 INCLUDE_DIRECTORIES(includes)
 ADD_EXECUTABLE(main src/lattice.cpp src/lattice_1d.cpp src/lattice_measurement.cpp src/metropolis_result.cpp src/utils.cpp src/main.cpp)
-TARGET_COMPILE_OPTIONS(main PRIVATE -Wall -Wextra -pedantic $<$<CONFIG:Release>:-Ofast>)
+TARGET_COMPILE_OPTIONS(main PRIVATE -Wall -Wextra -pedantic -march=native $<$<CONFIG:Release>:-Ofast>)
 
 find_package(TBB REQUIRED)
 target_link_libraries(main PRIVATE TBB::tbb)
