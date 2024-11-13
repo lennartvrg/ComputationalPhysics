@@ -3,6 +3,7 @@
 
 #include <span>
 #include <cmath>
+#include <cassert>
 #include <numeric>
 #include <ostream>
 #include <sstream>
@@ -13,6 +14,7 @@ struct Measurement {
 	Measurement() = default;
 
 	explicit Measurement(const std::span<T> & measurements) {
+		assert(measurements.size() > 1);
 		mean = std::accumulate(measurements.begin(), measurements.end(), 0l) / measurements.size();
 		uncertainty = std::sqrt(std::accumulate(measurements.begin(), measurements.end(), T(), [&] (const T sum, const T val) -> T {
 			return sum + std::pow(val - mean , 2);

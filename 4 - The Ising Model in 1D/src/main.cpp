@@ -3,49 +3,45 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <numeric>
-#include <random>
 #include <span>
 #include <string>
 #include <execution>
+#include <random>
 
-#include "measurement.h"
+#include <measurement.h>
 #include <lattice_measurement.h>
-#include "lattice_1d.h"
+#include <lattice_1d.h>
+#include <utils.h>
 
-void write_measurement_output(const std::span<LatticeMeasurement> measurements) {
-    std::ofstream output;
-    output.open("output/lattice_scaling.csv");
+/**
+ * The Mersenne Twister 19937 uniform random number generator with random seed.
+ */
+static thread_local std::mt19937 generator {std::random_device()()};
 
-	output << "Lattice,Action,DeltaAction,DiffAction,DeltaDiffAction\n";
-	std::ranges::copy(measurements, std::ostream_iterator<LatticeMeasurement>(output, "\n"));
-    output.close();
-}
+/**
+ * A uniform distribution [0, 1] from which the generate can sample.
+ */
+static std::uniform_real_distribution uniform_distribution {0.0, 1.0};
 
-Measurement<int64_t> measure_execution(const size_t num_runs, const auto & lambda) {
-	std::vector<int64_t> measurements (num_runs, 0);
-	std::generate(std::execution::par, measurements.begin(), measurements.end(), [&] {
-		const auto begin = std::chrono::steady_clock::now();
-		static_cast<void>(lambda());
-
-		const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
-	});
-	return Measurement(static_cast<std::span<int64_t>>(measurements));
-}
-
+/**
+ * 
+ * @param lattice_size The size of the lattice to be measured.
+ * @return The time it took to calculate the action and action_diff in nanoseconds.
+ */
 LatticeMeasurement measure_lattice(const size_t lattice_size)
 {
+	static std::atomic_int counter { 0 };
 	const Lattice1D lattice { lattice_size, 1, 1 };
 
-	const Measurement<int64_t> action = measure_execution(100, [&] -> double {
-		return lattice.calc_action();
-	});
+	const Measurement<int64_t> action = measure_execution([&] -> void {
+		static_cast<void>(lattice.action());
+	}, 100);
 
-	const Measurement<int64_t> diffAction = measure_execution(100, [&] -> double {
-		return lattice.calc_diff_action(1, 0);
-	});
+	const Measurement<int64_t> diffAction = measure_execution([&] -> void {
+		static_cast<void>(lattice.action_diff(0));
+	}, 100);
 
+	std::cout << "\rMeasure lattice scaling: " + std::to_string(++counter) + "/50" << std::flush;
 	return LatticeMeasurement { lattice_size, action, diffAction };
 }
 
@@ -55,20 +51,56 @@ void measure_lattice_scaling()
 	std::ranges::generate(sizes, [n = 0] mutable -> int { return n += 200000; });
 
 	std::vector<LatticeMeasurement> measurements (sizes.size());
-	std::ranges::transform(sizes, measurements.begin(), [i = 0] (const size_t lattice_size) mutable -> LatticeMeasurement {
-		std::cout << "\rMeasure lattice scaling: " + std::to_string(++i) + "/50" << std::flush;
-		return measure_lattice(lattice_size);
-	});
+	std::ranges::transform(sizes, measurements.begin(), measure_lattice);
 
-	write_measurement_output(measurements);
+	write_output_csv(measurements, "lattice_scaling", "Lattice,Action,DeltaAction,DiffAction,DeltaDiffAction\n");
 	std::cout << std::endl;
+}
+
+void metropolis_sweep(const std::shared_ptr<Lattice> & lattice)
+{
+	for (size_t i = 0; i < lattice->num_sites(); ++i) {
+		const double diff = lattice->action_diff(i);
+		const double acceptance = std::min(1.0, std::exp(-diff));
+
+		if (acceptance > uniform_distribution(generator)) {
+			lattice->fetch_flip(i);
+		}
+	}
+}
+
+double metropolis_hastings(const size_t num_samples, const double h)
+{
+	std::vector<double> measurements (num_samples);
+	const std::shared_ptr<Lattice> lattice = std::make_shared<Lattice1D>(20, 0.75, h);
+
+	for (size_t i = 0; i < num_samples; ++i) {
+		metropolis_sweep(lattice);
+		measurements.push_back(lattice->magnetization() / static_cast<double>(lattice->num_sites()));
+	}
+
+	return std::accumulate(measurements.begin(), measurements.end(), 0.0) / static_cast<double>(measurements.size());
+}
+
+void sweep_external_magnetic_fields() {
+	std::ofstream output;
+	output.open("output/metropolis.csv");
+
+	output << "h,value" << "\n";
+	for (size_t i = 0; i <= 200; ++i) {
+		const double h = static_cast<double>(i) / 100 - 1.0;
+		output << h << "," << metropolis_hastings(100000, h) << "\n";
+	}
+
+	output.close();
 }
 
 int main()
 {
     std::filesystem::create_directory("output");
 
-	measure_lattice_scaling();
+	//measure_lattice_scaling();
+	sweep_external_magnetic_fields();
 
 	return 0;
 }

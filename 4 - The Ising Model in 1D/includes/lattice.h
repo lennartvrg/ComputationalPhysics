@@ -9,15 +9,16 @@ public:
     virtual ~Lattice() = default;
 
     virtual short fetch_flip(size_t i) = 0;
+    virtual constexpr size_t num_sites() noexcept = 0;
 
-    [[nodiscard]] virtual double calc_energy() const = 0;
-    [[nodiscard]] virtual double calc_diff_energy(short old_spin, size_t t) const = 0;
+    [[nodiscard]] virtual double energy() const = 0;
+    [[nodiscard]] virtual double energy_diff(size_t i) const = 0;
 
-    [[nodiscard]] virtual double calc_magnetization() const = 0;
-    [[nodiscard]] virtual double calc_diff_magnetization(short old_spin) const = 0;
+    [[nodiscard]] virtual double magnetization() const = 0;
+    [[nodiscard]] virtual double magnetization_diff(size_t i) const = 0;
 
-    [[nodiscard]] double calc_action() const;
-    [[nodiscard]] double calc_diff_action(short old_spin, size_t i) const;
+    [[nodiscard]] double action() const;
+    [[nodiscard]] double action_diff(size_t i) const;
 private:
     double j, h;
 };

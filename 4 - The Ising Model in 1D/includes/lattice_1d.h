@@ -2,7 +2,6 @@
 #define LATTICE_1D_H
 
 #include <vector>
-#include <execution>
 
 #include "lattice.h"
 
@@ -11,12 +10,13 @@ public:
     Lattice1D(const size_t lattice_size, const double j, const double h) : Lattice(j, h), spins(lattice_size, 1) {}
 
 	short fetch_flip(size_t i) override;
+	size_t constexpr num_sites() noexcept override;
 
-	double calc_energy() const override;
-	double calc_diff_energy(short old_spin, size_t i) const override;
+	[[nodiscard]] double energy() const override;
+	[[nodiscard]] double energy_diff(size_t i) const override;
 
-	double calc_magnetization() const override;
-	double calc_diff_magnetization(short old_spin) const override;
+	[[nodiscard]] double magnetization() const override;
+	[[nodiscard]] double magnetization_diff(size_t i) const override;
 
 private:
     std::vector<short> spins;
