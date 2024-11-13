@@ -19,6 +19,8 @@ public:
 
     [[nodiscard]] double action() const;
     [[nodiscard]] double action_diff(size_t i) const;
+
+    [[nodiscard]] double acceptance(size_t i) const noexcept;
 private:
     double j, h;
 };

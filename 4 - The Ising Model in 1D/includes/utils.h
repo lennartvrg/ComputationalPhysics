@@ -5,11 +5,17 @@
 #include <execution>
 #include <fstream>
 
-#include <measurement.h>
-#include <lattice_measurement.h>
+#include <experiment.h>
 
-Measurement<int64_t> measure_execution(const std::function<void()> & lambda, size_t num_runs);
+Experiment<int64_t> measure_execution(const std::function<void()> & lambda, size_t num_runs);
 
-void write_output_csv(std::span<LatticeMeasurement> measurements, const std::string & file_name, const std::string & headers);
+template<typename T>
+void write_output_csv(const std::span<T> measurements, const std::string & file_name, const std::string & headers) {
+	std::ofstream output;
+	output.open("output/" + file_name + ".csv");
 
+	output << headers << "\n";
+	std::ranges::copy(measurements, std::ostream_iterator<T>(output, "\n"));
+	output.close();
+}
 #endif //UTILS_H
