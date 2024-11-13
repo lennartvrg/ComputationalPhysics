@@ -1,25 +1,26 @@
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <span>
 #include <string>
-#include <execution>
 #include <random>
+#include <ranges>
+#include <execution>
 
 #include <experiment.h>
 #include <lattice_measurement.h>
 #include <lattice_1d.h>
 #include <metropolis_result.h>
-#include <ranges>
 #include <utils.h>
 
 constexpr size_t NUM_H_STEPS = 100;
 
-constexpr size_t NUM_SAMPLES = 10000;
+constexpr size_t NUM_EXPERIMENTS = 100;
 
-constexpr size_t NUM_RESAMPLES = 100;
+constexpr size_t NUM_SAMPLES = 10000;
 
 constexpr size_t LATTICE_SIZE = 20;
 
@@ -37,7 +38,7 @@ static std::uniform_real_distribution uniform_distribution {0.0, 1.0};
 
 static auto stepped_magnetic_field() {
 	return std::views::iota(static_cast<size_t>(0), NUM_H_STEPS) | std::views::transform([=] (const size_t i) {
-		return static_cast<double>(2 * i) / static_cast<double>(NUM_H_STEPS) - 1.0;
+		return static_cast<double>(2 * i) / static_cast<double>(NUM_H_STEPS - 1) - 1.0;
 	});
 }
 
@@ -65,7 +66,7 @@ LatticeMeasurement measure_lattice(const size_t lattice_size)
 
 void measure_lattice_scaling()
 {
-	std::vector<size_t> sizes (50);
+	std::vector<size_t> sizes (10);
 	std::ranges::generate(sizes, [n = 0] mutable -> int { return n += 100000; });
 
 	std::vector<LatticeMeasurement> measurements (sizes.size());
@@ -106,11 +107,11 @@ MetropolisResult metropolis_hastings_multiple_experiments(const size_t num_exper
 
 void sweep_external_magnetic_field() {
 	static std::atomic_int counter { 0 };
-	std::vector<MetropolisResult> measurements { NUM_H_STEPS };
+	std::vector<MetropolisResult> measurements;
 
 	for (const double h : stepped_magnetic_field()) {
 		std::cout << "\rMetropolis-Hastings: h=" << std::to_string(++counter) << "/" << std::to_string(NUM_H_STEPS) << std::flush;
-		measurements.emplace_back(metropolis_hastings_multiple_experiments(NUM_RESAMPLES, NUM_SAMPLES, h));
+		measurements.emplace_back(metropolis_hastings_multiple_experiments(NUM_EXPERIMENTS, NUM_SAMPLES, h));
 	}
 
 	write_output_csv(static_cast<std::span<MetropolisResult>>(measurements), "metropolis", "h,magnetization,delta_magnetization");

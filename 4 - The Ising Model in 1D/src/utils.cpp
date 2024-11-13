@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <utils.h>
+#include <execution>
 
 Experiment<int64_t> measure_execution(const std::function<void()> & lambda, const size_t num_runs) {
 	std::vector<int64_t> measurements (num_runs, 0);

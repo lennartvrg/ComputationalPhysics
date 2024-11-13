@@ -2,8 +2,7 @@
 #define LATTICE_1D_H
 
 #include <vector>
-
-#include "lattice.h"
+#include <lattice.h>
 
 class Lattice1D final : public Lattice {
 public:

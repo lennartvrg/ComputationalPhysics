@@ -4,8 +4,8 @@
 #include <span>
 #include <cmath>
 #include <cassert>
+#include <iostream>
 #include <numeric>
-#include <ostream>
 #include <sstream>
 #include <type_traits>
 

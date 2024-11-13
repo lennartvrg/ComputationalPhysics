@@ -1,4 +1,6 @@
 #include <cmath>
+#include <algorithm>
+
 #include "lattice.h"
 
 double Lattice::action() const {
