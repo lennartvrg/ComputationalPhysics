@@ -5,16 +5,16 @@
 
 struct MetropolisResult {
 	MetropolisResult() = default;
-	explicit MetropolisResult(double h, Experiment<double> intensive_magnetization);
+	explicit MetropolisResult(double h, Experiment<double> experiment);
 
 	friend std::ostream & operator<<(std::ostream & os, const MetropolisResult & result) {
 		std::stringstream output;
-		output << result.h << "," << result.intensive_magnetization;
+		output << result.h << "," << result.experiment;
 		return os << output.str();
 	}
 
 	double h;
-	Experiment<double> intensive_magnetization;
+	Experiment<double> experiment;
 };
 
 #endif //METROPOLIS_RESULT_H
