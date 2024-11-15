@@ -11,7 +11,7 @@ public:
 	/**
 	 * Instantiates a new lattice with the given coupling constant j and magnetic field strength h
 	 */
-    Lattice(const double j, const double h) : j(j), h(h) {};
+    Lattice(const double beta, const double j, const double h) : beta(beta), j(j), h(h) {};
     virtual ~Lattice() = default;
 
 
@@ -62,11 +62,11 @@ public:
 	 */
     [[nodiscard]] double acceptance(size_t i) const noexcept;
 
-private:
+protected:
 	/**
-	 * The coupling constant j and the magnetic field strnegth h.
+	 * The inverse temperature, coupling constant j and the magnetic field strength h.
 	 */
-    double j, h;
+    double beta, j, h;
 };
 
 #endif //LATTICE_H

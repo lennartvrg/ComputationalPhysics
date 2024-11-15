@@ -17,11 +17,11 @@ double Lattice1D::energy() const {
     {
         energy += spins.at(i) * spins.at((i + 1) % spins.size());
     }
-    return -energy;
+    return -j * energy;
 }
 
 double Lattice1D::energy_diff(const size_t i) const {
-    return 2 * spins.at(i) * (spins.at((i + 1) % spins.size()) + spins.at((i + spins.size() - 1) % spins.size()));
+    return 2 * j * spins.at(i) * (spins.at((i + 1) % spins.size()) + spins.at((i + spins.size() - 1) % spins.size()));
 }
 
 double Lattice1D::magnetization() const {

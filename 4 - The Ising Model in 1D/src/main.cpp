@@ -37,6 +37,11 @@ constexpr size_t NUM_SWEEPS = 10000;
 constexpr size_t LATTICE_SIZE = 20;
 
 /**
+ * The beta = 1 / T constant.
+ */
+constexpr double Beta = 1.0;
+
+/**
  * The coupling constant J
  */
 constexpr double J = 0.75;
@@ -54,7 +59,7 @@ static std::uniform_real_distribution uniform_distribution {0.0, 1.0};
 /**
  * Divides the range [-1,+1] of the external magnetic field into NUM_H_STEPS steps for iterating over them.
  *
- * @return The strenght of the external magnetic field.
+ * @return The strength of the external magnetic field.
  */
 static auto stepped_magnetic_field() {
 	return std::views::iota(static_cast<size_t>(0), NUM_H_STEPS) | std::views::transform([=] (const size_t i) {
@@ -71,7 +76,7 @@ static auto stepped_magnetic_field() {
 LatticeResult measure_lattice(const size_t lattice_size)
 {
 	static std::atomic_int counter { 0 };
-	const Lattice1D lattice { lattice_size, J, 0 };
+	const Lattice1D lattice { lattice_size, Beta, J, 0 };
 
 	const Experiment<int64_t> action = measure_execution([&] -> void {
 		static_cast<void>(lattice.action());
@@ -127,7 +132,7 @@ double metropolis_sweep(const std::shared_ptr<Lattice> & lattice)
 double metropolis_hastings_single_experiment(const size_t num_sweeps, const double h)
 {
 	std::ranges::iota_view<size_t, size_t> ranges { 0, num_sweeps };
-	const std::shared_ptr<Lattice> lattice = std::make_shared<Lattice1D>(LATTICE_SIZE, J, h);
+	const std::shared_ptr<Lattice> lattice = std::make_shared<Lattice1D>(LATTICE_SIZE, Beta, J, h);
 
 	return std::accumulate(ranges.begin(), ranges.end(), 0.0, [&, current = lattice->magnetization()] (const double sum, [[maybe_unused]] const size_t i) mutable {
 		return sum + (current += metropolis_sweep(lattice));

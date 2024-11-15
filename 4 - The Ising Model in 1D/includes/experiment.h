@@ -28,7 +28,7 @@ struct Experiment {
 		mean = std::accumulate(measurements.begin(), measurements.end(), T()) / static_cast<T>(measurements.size());
 		uncertainty = std::sqrt(std::accumulate(measurements.begin(), measurements.end(), T(), [&] (const T sum, const T val) -> T {
 			return sum + std::pow(val - mean , 2);
-		}) / static_cast<T>(measurements.size() - 1));
+		}) / static_cast<T>(std::max(static_cast<size_t>(0), measurements.size() - 1)));
 	};
 
 	/**

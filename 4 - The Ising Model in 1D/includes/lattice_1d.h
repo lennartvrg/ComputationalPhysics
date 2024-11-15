@@ -6,7 +6,7 @@
 
 class Lattice1D final : public Lattice {
 public:
-    Lattice1D(const size_t lattice_size, const double j, const double h) : Lattice(j, h), spins(lattice_size, 1) {}
+    Lattice1D(const size_t lattice_size, const double beta, const double j, const double h) : Lattice(beta, j, h), spins(lattice_size, 1) {}
 
 	double flip_fetch_magnetization_diff(size_t i) override;
 	[[nodiscard]] constexpr size_t num_sites() const noexcept override;
