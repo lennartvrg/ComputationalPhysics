@@ -2,9 +2,8 @@
 
 #include <ranges>
 
-double Lattice1D::flip_fetch_magnetization_diff(const size_t i) {
-    const short spin = spins.at(i) *= -1;
-    return magnetization_diff(static_cast<short>(-spin));
+void Lattice1D::flip_spin(const size_t i) {
+    spins.at(i) *= -1;
 }
 
 constexpr size_t Lattice1D::num_sites() const noexcept {
