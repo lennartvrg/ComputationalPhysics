@@ -11,7 +11,7 @@
 #include <execution>
 
 #include <experiment.h>
-#include <lattice_result.h>
+#include <lattice_scaling_result.h>
 #include <lattice_1d.h>
 #include <metropolis_result.h>
 #include <utils.h>
@@ -73,7 +73,7 @@ static auto stepped_magnetic_field() {
  * @param lattice_size The size of the lattice to be measured.
  * @return The time it took to calculate the action and action_diff in nanoseconds.
  */
-LatticeResult measure_lattice(const size_t lattice_size)
+LatticeScalingResult measure_lattice(const size_t lattice_size)
 {
 	static std::atomic_int counter { 0 };
 	const Lattice1D lattice { lattice_size, Beta, J, 0 };
@@ -87,7 +87,7 @@ LatticeResult measure_lattice(const size_t lattice_size)
 	}, 20);
 
 	std::cout << "\rMeasure lattice scaling: " << std::to_string(++counter) << "/100" << std::flush;
-	return LatticeResult { lattice_size, action, diffAction };
+	return LatticeScalingResult { lattice_size, action, diffAction };
 }
 
 /**
@@ -98,45 +98,12 @@ void measure_lattice_scaling()
 	std::vector<size_t> sizes (100);
 	std::ranges::generate(sizes, [n = 0] mutable -> int { return n += 50000; });
 
-	std::vector<LatticeResult> measurements (sizes.size());
+	std::vector<LatticeScalingResult> measurements (sizes.size());
 	std::ranges::transform(sizes, measurements.begin(), measure_lattice);
 	std::cout << std::endl;
 
-	const std::span<const LatticeResult> span = measurements;
+	const std::span<const LatticeScalingResult> span = measurements;
 	write_output_csv(span, "lattice_scaling", "Lattice,Action,DeltaAction,DiffAction,DeltaDiffAction");
-}
-
-/**
- * Performs a single lattice sweep and calculates the acceptance ratio for every lattice site and flips
- * the spin of the site if the acceptance ration is greater than a random number [0, 1].
- */
-double metropolis_sweep(const std::shared_ptr<Lattice> & lattice)
-{
-	double delta = 0.0;
-	for (const size_t i : std::views::iota(static_cast<size_t>(0), lattice->num_sites())) {
-		if (lattice->acceptance(i) > uniform_distribution(generator)) {
-			delta += lattice->flip_fetch_magnetization_diff(i);
-		}
-	}
-	return delta;
-}
-
-/**
- * Performs the metropolis hastings simulation with the given number of sweeps for a given
- * external magnetic field h. Returns the mean magnetization per spin.
- *
- * @param num_sweeps The number of sweeps made in total.
- * @param h The strength of the external magnetic field.
- * @return The mean magnetization per spin.
- */
-double metropolis_hastings_single_experiment(const size_t num_sweeps, const double h)
-{
-	std::ranges::iota_view<size_t, size_t> ranges { 0, num_sweeps };
-	const std::shared_ptr<Lattice> lattice = std::make_shared<Lattice1D>(LATTICE_SIZE, Beta, J, h);
-
-	return std::accumulate(ranges.begin(), ranges.end(), 0.0, [&, current = lattice->magnetization()] (const double sum, [[maybe_unused]] const size_t i) mutable {
-		return sum + (current += metropolis_sweep(lattice));
-	}) / static_cast<double>(lattice->num_sites() * num_sweeps);
 }
 
 /**
@@ -152,7 +119,7 @@ MetropolisResult metropolis_hastings_multiple_experiments(const size_t num_exper
 {
 	std::vector<double> measurements (num_experiments);
 	std::generate(std::execution::par, measurements.begin(), measurements.end(), [&] {
-		return metropolis_hastings_single_experiment(num_samples, h);
+		return Lattice1D(LATTICE_SIZE, Beta, J, h).metropolis_hastings(num_samples).magnetization;
 	});
 	return MetropolisResult { h, Experiment<double>(measurements) };
 }

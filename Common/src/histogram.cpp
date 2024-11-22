@@ -7,7 +7,7 @@
  */
 histogram::Histogram::Histogram(const size_t bins) : data(bins)
 {
-    std::fill(data.begin(), data.end(), 0);
+    std::ranges::fill(data, 0);
 }
 
 /**
@@ -31,7 +31,7 @@ void histogram::Histogram::add(const double value)
 std::ostream & histogram::operator<<(std::ostream & os, const Histogram & histogram)
 {
     os << "Bin,Count\n";
-    std::for_each(histogram.data.begin(), histogram.data.end(), [idx = 0, & histogram, & os] (const std::atomic<int32_t> & value) mutable {
+    std::ranges::for_each(histogram.data, [idx = 0, & histogram, & os] (const std::atomic<int32_t> & value) mutable {
         os << static_cast<double>(idx++) / static_cast<double>(histogram.data.size()) << "," << value << "\n";
     });
     return os;

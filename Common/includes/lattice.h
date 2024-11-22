@@ -2,6 +2,9 @@
 #define LATTICE_H
 
 #include <cstddef>
+#include <generator>
+
+#include "lattice_observable.h"
 
 /**
  * Represents a generic lattice and declares all methods needed for Metroplis-Hastings Monte Carlo methods.
@@ -16,9 +19,9 @@ public:
 
 
 	/**
-	 * Flips the spin at index i and returns the magnetization difference.
+	 * Flips the spin at index i.
      */
-    virtual double flip_fetch_magnetization_diff(size_t i) = 0;
+    virtual void flip_spin(size_t i) = 0;
 
 	/**
 	 * Returns the number of spins in the lattice.
@@ -58,15 +61,45 @@ public:
     [[nodiscard]] double action_diff(size_t i) const;
 
 	/**
+	 * Calculates the action difference given the difference of energy and magnetization.
+	 */
+	[[nodiscard]] double action_diff(double diff_energy, double diff_magnetization) const;
+
+	/**
 	 * Calculates the acceptance probability if one was to flip the spin at index i.
 	 */
     [[nodiscard]] double acceptance(size_t i) const noexcept;
+
+	/**
+	 * Calculates the acceptance probability given the difference of energy and magnetization
+	 */
+	[[nodiscard]] double acceptance(double diff_energy, double diff_magnetization) const;
+
+	/**
+	 * Performs a single lattice sweep and calculates the acceptance ratio for every lattice site and flips
+	 * the spin of the site if the acceptance ration is greater than a random number [0, 1].
+	 */
+	std::generator<LatticeObservable> sweeps();
+
+	/**
+	 * Performs the metropolis hastings simulation with the given number of sweeps for a given
+	 * external magnetic field h. Returns the mean observable values per spin.
+	 *
+	 * @param num_sweeps The number of sweeps made in total.
+	 * @return The mean observable values.
+	 */
+	LatticeObservable metropolis_hastings(size_t num_sweeps);
 
 protected:
 	/**
 	 * The inverse temperature, coupling constant j and the magnetic field strength h.
 	 */
     double beta, j, h;
+
+	/**
+	 * The current observable values
+	 */
+	LatticeObservable current;
 };
 
 #endif //LATTICE_H
