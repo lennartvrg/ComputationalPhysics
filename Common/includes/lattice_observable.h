@@ -14,7 +14,7 @@ struct LatticeObservable {
 	}
 
 	LatticeObservable & operator+=(const LatticeObservable & val) {
-		assert(sum.j == rhs.j);
+		assert(j == val.j);
 		sweeps = val.sweeps;
 		energy += val.energy;
 		magnetization += val.magnetization;

@@ -8,14 +8,12 @@
 #include <utils.h>
 #include <exact_result.h>
 #include <lattice.h>
-#include <pstl/glue_execution_defs.h>
-
 #include "lattice_2d.h"
 #include "lattice_observable.h"
 
 constexpr size_t NUM_INV_J_STEPS = 10000;
 
-constexpr size_t NUM_STEPS = 10000;
+constexpr size_t NUM_STEPS = 100000;
 
 constexpr double Beta = 1.0;
 
@@ -58,6 +56,8 @@ static auto sweep_through_j() {
 
 void calculate_exact_results()
 {
+	std::cout << "Calculating exact results for Energy and Magnetization" << std::endl;
+
 	std::vector<ExactResult> measurements (NUM_INV_J_STEPS);
 	std::ranges::transform(sweep_through_j(), measurements.begin(), [] (const double j) {
 		return ExactResult { j, exact_energy(j), exact_magnetization(j) };
@@ -67,27 +67,13 @@ void calculate_exact_results()
 	write_output_csv(span, "exact_results", "j,energy,magnetization");
 }
 
-void monte_carlo_sweep_j()
-{
-	const std::vector<double> inverses = std::ranges::to<std::vector>(sweep_through_j());
-	std::vector<LatticeObservable> measurements (NUM_INV_J_STEPS);
-
-	std::atomic_int counter {0};
-	std::transform(std::execution::par, inverses.begin(), inverses.end(), measurements.begin(), [&] (const double j) {
-		std::cout << std::format("\r Scan: {}/10000", ++counter) << std::flush;
-		return Lattice2D(8, Beta, j, H).metropolis_hastings(NUM_STEPS);
-	});
-	std::cout << std::endl;
-
-	const std::span<const LatticeObservable> span = measurements;
-	write_output_csv(span, "sweep", "j,sweeps,energy,magnetization");
-}
-
 void monte_carlo_history(const size_t lattice_length)
 {
-	std::vector<LatticeObservable> measurements;
-	std::ranges::transform(Lattice2D(lattice_length, Beta, J, H).sweeps() | std::views::take(NUM_STEPS), std::back_inserter(measurements), [] (const auto current) {
-		return current;
+	std::cout << "Metropolis-Hastings for N = " << lattice_length << std::endl;
+
+	std::vector<LatticeObservable> measurements (NUM_STEPS);
+	std::ranges::transform(Lattice2D(lattice_length, Beta, J, H).sweeps() | std::views::take(NUM_STEPS), measurements.begin(), [=] (const auto current) {
+		return current / std::pow(lattice_length, 2.0);
 	});
 
 	const std::span<const LatticeObservable> span = measurements;
@@ -99,7 +85,6 @@ int main()
 	std::filesystem::create_directory("output");
 
 	calculate_exact_results();
-	monte_carlo_sweep_j();
 	monte_carlo_history(4);
 	monte_carlo_history(8);
 	monte_carlo_history(12);
