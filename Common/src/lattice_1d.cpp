@@ -25,7 +25,7 @@ double Lattice1D::energy_diff(const size_t i) const {
 
 double Lattice1D::magnetization() const {
     int magnetization = 0;
-    for (const short spin : spins)
+    for (const int8_t spin : spins)
     {
         magnetization += spin;
     }
@@ -36,6 +36,6 @@ double Lattice1D::magnetization_diff(const size_t i) const {
     return magnetization_diff(spins.at(i));
 }
 
-double Lattice1D::magnetization_diff(const short old_spin) {
+double Lattice1D::magnetization_diff(const int8_t old_spin) {
     return -2 * old_spin;
 }

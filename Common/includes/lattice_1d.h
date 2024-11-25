@@ -19,9 +19,9 @@ public:
 	[[nodiscard]] double magnetization() const override;
 	[[nodiscard]] double magnetization_diff(size_t i) const override;
 
-	static double magnetization_diff(short old_spin);
+	static double magnetization_diff(int8_t old_spin);
 
 private:
-    std::vector<short> spins;
+    std::vector<int8_t> spins;
 };
 #endif //LATTICE_1D_H
