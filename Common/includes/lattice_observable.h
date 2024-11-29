@@ -27,7 +27,7 @@ struct LatticeObservable {
 
 	friend std::ostream & operator<<(std::ostream & os, const LatticeObservable & rhs) {
 		std::stringstream output;
-		output << std::format("{}", rhs.j) << "," << std::format("{}", rhs.sweeps) << "," << std::format("{}", rhs.energy) << "," << std::format("{}", rhs.magnetization);
+		output << std::format("{:.4f}", rhs.j) << "," << std::format("{}", rhs.sweeps) << "," << std::format("{:.6f}", rhs.energy) << "," << std::format("{:.6f}", rhs.magnetization);
 		return os << output.str();
 	}
 
