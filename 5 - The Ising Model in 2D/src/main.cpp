@@ -47,7 +47,7 @@ double exact_energy(const double j) {
 	return -j * (std::cosh(2.0 * j) / std::sinh(2.0 * j)) * (1.0 + 2.0 * (2.0 * std::pow(std::tanh(2.0 * j), 2.0) - 1.0) * k / std::numbers::pi);
 }
 
-static auto sweep_through_j() {
+static auto sweep_through_inv_j() {
 	static_assert(NUM_INV_J_STEPS > 1);
 	return std::views::iota(static_cast<size_t>(0), NUM_INV_J_STEPS) | std::views::transform([=] (const size_t i) {
 		return 1.0 / (0.1 + static_cast<double>(i) * (4.9 / static_cast<double>(NUM_INV_J_STEPS - 1)));
@@ -59,7 +59,7 @@ void calculate_exact_results()
 	std::cout << "Calculating exact results for Energy and Magnetization" << std::endl;
 
 	std::vector<ExactResult> measurements (NUM_INV_J_STEPS);
-	std::ranges::transform(sweep_through_j(), measurements.begin(), [] (const double j) {
+	std::ranges::transform(sweep_through_inv_j(), measurements.begin(), [] (const double j) {
 		return ExactResult { j, exact_energy(j), exact_magnetization(j) };
 	});
 

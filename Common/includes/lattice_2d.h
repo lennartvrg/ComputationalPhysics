@@ -1,6 +1,8 @@
 #ifndef LATTICE_2D_H
 #define LATTICE_2D_H
 
+#include <cmath>
+#include <iostream>
 #include <lattice.h>
 #include <vector>
 
@@ -8,6 +10,10 @@ class Lattice2D final : public Lattice {
 public:
 	Lattice2D(const size_t lattice_length, const double beta, const double j, const double h) : Lattice(beta, j, h), lattice_length(lattice_length), spins(lattice_length * lattice_length, 1) {
 	    current = LatticeObservable(0, j, energy(), magnetization());
+	}
+
+	Lattice2D(const double beta, const double j, const double h, std::vector<int8_t> & spins) : Lattice(beta, j, h), lattice_length(static_cast<size_t>(std::sqrt(spins.size()))), spins(std::move(spins)) {
+		current = LatticeObservable(0, j, energy(), magnetization());
 	}
 
 	void flip_spin(size_t i) override;
